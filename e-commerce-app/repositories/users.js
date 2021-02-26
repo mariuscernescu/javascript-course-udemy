@@ -33,6 +33,8 @@ class UsersRepository {
     // Write the updated 'records'
 
     await this.writeAll(records);
+
+    return attrs;
   }
 
   async writeAll(records) {
