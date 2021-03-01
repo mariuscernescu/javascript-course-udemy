@@ -45,6 +45,15 @@ class UsersRepository {
     return record;
   }
 
+  async comparePasswords(saved, supplied) {
+    // Saved -> password saved in db
+    // Supplied -> password gived to us by user.
+    const [hased, salt] = saved.split(".");
+    const hasedSuppliedBuf = await scrypt(supplied, salt, 64);
+
+    return hased === hasedSuppliedBuf.toString("hex");
+  }
+
   async writeAll(records) {
     await fs.promises.writeFile(
       this.filename,
