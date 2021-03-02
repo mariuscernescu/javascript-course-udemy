@@ -14,30 +14,33 @@ router.get("/signup", (req, res) => {
 router.post(
   "/signup",
   [
-    check("email").trim().normalizeEmail().isEmail(),
+    check("email")
+      .trim()
+      .normalizeEmail()
+      .isEmail()
+      .custom(async (email) => {
+        const existingUser = await usersRepo.getOneBy({ email });
+        if (existingUser) {
+          throw new Error("Email in use");
+        }
+      }),
     check("password").trim().isLength({ min: 4, max: 25 }),
-    check("passwordConfirmation").trim().isLength({ min: 4, max: 25 }),
+    check("passwordConfirmation")
+      .trim()
+      .isLength({ min: 4, max: 25 })
+      .custom((passwordConfirmation, { req }) => {
+        if (passwordConfirmation !== req.body.password) {
+          throw new Error("Passswords must match");
+        }
+      }),
   ],
   async (req, res) => {
     const errors = validationResult(req);
     console.log(errors);
 
     const { email, password, passwordConfirmation } = req.body;
-
-    const existingUser = await usersRepo.getOneBy({ email });
-
-    if (existingUser) {
-      return res.send("Email in use");
-    }
-
-    if (password !== passwordConfirmation) {
-      return res.send("Passwords must match");
-    }
-
-    // Create user
     const user = await usersRepo.create({ email, password });
 
-    // Store the id in the user cookie
     req.session.userId = user.id;
 
     res.send("Account created!!");
